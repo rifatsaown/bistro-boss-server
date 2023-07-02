@@ -41,12 +41,12 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        
+
         const userCollection = client.db("bistroDb").collection("user");
         const menuCollection = client.db("bistroDb").collection("menu");
         const reviewsCollection = client.db("bistroDb").collection("reviews");
         const cartCollection = client.db("bistroDb").collection("carts");
-        
+
         // JWT token Generate
         app.post('/jwt', (req, res) => {
             const user = req.body;
