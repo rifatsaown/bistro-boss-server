@@ -7,10 +7,11 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = process.env.DB_PATH;
 
-// middleware
+
+//-------- middleware Start -----------//
 app.use(cors());
 app.use(express.json());
-// JWT token verify for all user access 
+// JWT token verify for all user access Middleware
 const verifyJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
