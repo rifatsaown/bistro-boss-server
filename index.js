@@ -27,7 +27,7 @@ const verifyJWT = (req, res, next) => {
         next();
     })
 }
-
+//-------- middleware End -----------//
 
 app.get('/', (req, res) => res.send('Boss is here!'))
 
