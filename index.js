@@ -35,8 +35,17 @@ async function run() {
         })
 
         // User Collection api
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        })
+
         app.post('/users', async (req, res) => {
             const user = req.body;
+            const exixtingUser = await userCollection.findOne({ email: user.email });
+            if (exixtingUser) {
+                return res.send({ status: 'error', message: 'User already exists' });
+            }
             const result = await userCollection.insertOne(user);
             res.json(result);
         })
