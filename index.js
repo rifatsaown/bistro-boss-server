@@ -10,7 +10,7 @@ const uri = process.env.DB_PATH;
 // middleware
 app.use(cors());
 app.use(express.json());
-
+// JWT token verify for all user access 
 const verifyJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -41,8 +41,20 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-
-        const verifyAdmin =async (req, res, next) => {
+        
+        const userCollection = client.db("bistroDb").collection("user");
+        const menuCollection = client.db("bistroDb").collection("menu");
+        const reviewsCollection = client.db("bistroDb").collection("reviews");
+        const cartCollection = client.db("bistroDb").collection("carts");
+        
+        // JWT token Generate
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.JWT_SECRET_KEY, { expiresIn: "1h" });
+            res.send({ token });
+        })
+        // JWT token verify for admin access
+        const verifyAdmin = async (req, res, next) => {
             const email = req.user.email;
             const query = { email: email };
             const user = await userCollection.findOne(query);
@@ -50,19 +62,8 @@ async function run() {
                 return res.status(403).send({ status: 'error', message: 'Forbiden Access' });
             }
             next();
-            
+
         }
-
-        const userCollection = client.db("bistroDb").collection("user");
-        const menuCollection = client.db("bistroDb").collection("menu");
-        const reviewsCollection = client.db("bistroDb").collection("reviews");
-        const cartCollection = client.db("bistroDb").collection("carts");
-
-        app.post('/jwt', (req, res) => {
-            const user = req.body;
-            const token = jwt.sign(user, process.env.JWT_SECRET_KEY, { expiresIn: "1h" });
-            res.send({ token });
-        })
 
         // Get All the menu
         app.get('/menu', async (req, res) => {
@@ -71,11 +72,11 @@ async function run() {
         })
 
         // User Collection api
-        app.get('/users',verifyJWT,verifyAdmin, async (req, res) => {
+        app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
         })
-
+        // input user data to database
         app.post('/users', async (req, res) => {
             const user = req.body;
             const exixtingUser = await userCollection.findOne({ email: user.email });
@@ -86,19 +87,18 @@ async function run() {
             res.json(result);
         })
 
+        // find user is admin or not
         app.get('/users/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             if (email !== req.user.email) {
                 return res.status(403).send({ status: 'error', message: 'Forbiden Access' });
-            }    
+            }
             const query = { email: email };
             const user = await userCollection.findOne(query);
-            const result = {admin : user?.role === 'admin'};
+            const result = { admin: user?.role === 'admin' };
             res.send(result);
-            console.log(result);
         })
-
-
+        // add admin role
         app.patch('/users/admin/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) };
@@ -125,9 +125,8 @@ async function run() {
         })
 
         // ---------Cart Colection-------------//
-
         // Get All the carts
-        app.get('/carts',verifyJWT, async (req, res) => {
+        app.get('/carts', verifyJWT, async (req, res) => {
             const email = req.query.email;
 
             if (email !== req.user.email) {
@@ -141,13 +140,13 @@ async function run() {
                 res.send(result);
             }
         })
-
+        // add to cart
         app.post('/carts', async (req, res) => {
             const item = req.body;
             const result = await cartCollection.insertOne(item);
             res.json(result);
         })
-
+        // delete from cart
         app.delete('/carts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
