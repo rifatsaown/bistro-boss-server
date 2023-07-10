@@ -17,7 +17,7 @@ const verifyJWT = (req, res, next) => {
     if (!authHeader) {
         return res.status(401).send({ status: 'error', message: 'Unauthorized Access' });
     }
-    // Bearer token
+    // Bearer token cut from header
     const token = authHeader.split(' ')[1];
     jwt.verify(token, process.env.JWT_SECRET_KEY, (err, user) => {
         if (err) {
