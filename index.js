@@ -29,6 +29,7 @@ const verifyJWT = (req, res, next) => {
 }
 //-------- middleware End -----------//
 
+// app Home page
 app.get('/', (req, res) => res.send('Boss is here!'))
 
 // mongodb connection
