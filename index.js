@@ -72,8 +72,21 @@ async function run() {
             const result = await menuCollection.find({}).toArray();
             res.send(result);
         })
+        // Add new item to menu
+        app.post('/menu', verifyJWT, verifyAdmin, async (req, res) => {
+            const item = req.body;
+            const result = await menuCollection.insertOne(item);
+            res.json(result);
+        })
+        // delete item from menu
+        app.delete('/menu/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await menuCollection.deleteOne(query);
+            res.json(result);
+        })
 
-        // User Collection api
+        // ---------------------User Collection api----------------
         app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
@@ -88,7 +101,7 @@ async function run() {
             const result = await userCollection.insertOne(user);
             res.json(result);
         })
-
+        //-----------------------Admin api---------------------
         // find user is admin or not
         app.get('/users/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
@@ -112,6 +125,7 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
         })
+        // ---------------Admin api end------------------
         // delete user
         app.delete('/users/:id', async (req, res) => {
             const id = req.params.id;
@@ -119,6 +133,7 @@ async function run() {
             const result = await userCollection.deleteOne(query);
             res.json(result);
         })
+        // ---------------------User Collection api end----------------
 
         // Get All the reviews
         app.get('/reviews', async (req, res) => {
