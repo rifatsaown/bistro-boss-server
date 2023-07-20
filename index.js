@@ -49,6 +49,7 @@ async function run() {
         const menuCollection = client.db("bistroDb").collection("menu");
         const reviewsCollection = client.db("bistroDb").collection("reviews");
         const cartCollection = client.db("bistroDb").collection("carts");
+        const paymentCollection = client.db("bistroDb").collection("payments");
 
         // JWT token Generate
         app.post('/jwt', (req, res) => {
@@ -173,19 +174,31 @@ async function run() {
         })
         // ---------Cart Colection End-------------//
 
-        // Payment Intent
-        app.post('/create-payment-intent', async (req, res) => {
+        // create payment intent
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const { price } = req.body;
-            const paymentIntent = await stripe.paymentIntents.create({
-                amount: price * 100,
-                currency: "usd",
-                payment_method_types: ["card"],
-            });
-            res.send({
-                clientSecret: paymentIntent.client_secret,
-            });
-        });
+            const amount = parseInt(price * 100);
 
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+
+            res.send({
+                clientSecret: paymentIntent.client_secret
+            })
+        })
+
+        // payment releted api
+        app.post('/payment', verifyJWT, async (req, res) => {
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+            const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } };
+            // const query = { userEmail: payment.email }; // delete all cart item of user
+            const deleteResult = await cartCollection.deleteMany(query);
+            res.send({ result, deleteResult });
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
